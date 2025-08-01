@@ -8,22 +8,30 @@ const {
   resetPassword,
 } = require("../controller/userController");
 
-// Authentication miidle ware
+// Authentication middleware
+const authMiddleware = require("../middleware/authMiddleware");
 
-const authMiddleware = require("../middleware/authMiddlware");
+// Validation middleware
+const {
+  validateRegistration,
+  validateLogin,
+  validatePasswordReset,
+  validateForgotPassword,
+} = require("../middleware/validationMiddleware");
 
 // register route
-router.post("/register", register);
+router.post("/register", validateRegistration, register);
 
 // login user
-router.post("/login", login);
+router.post("/login", validateLogin, login);
 
-// login user
+// check user authentication
 router.get("/check", authMiddleware, checkUser);
 
 // route to request an otp for password reset
-router.post("/forgot-password", requestOTP);
+router.post("/forgot-password", validateForgotPassword, requestOTP);
+
 // route to reset password using otp
-router.post("/reset-password", resetPassword);
+router.post("/reset-password", validatePasswordReset, resetPassword);
 
 module.exports = router;
