@@ -4,7 +4,7 @@ require("dotenv").config();
 const client = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: process.env.SSL_REJECT_UNAUTHORIZED === "true",
+    rejectUnauthorized: false,
   },
 });
 
@@ -12,8 +12,10 @@ async function connectToDb() {
   try {
     await client.connect();
     console.log("Database connected successfully");
+    return true;
   } catch (err) {
-    console.error("Connection error", err.stack);
+    console.error("Database connection error:", err.stack);
+    throw err;
   }
 }
 
