@@ -10,21 +10,29 @@ const userUtility = {
     return Math.floor(100000 + Math.random() * 900000).toString();
   },
   
-  sendEmail: async (email, otp) => {
-    // Placeholder for email sending functionality
-    // In a real application, you would use a service like SendGrid, Nodemailer, etc.
-    console.log(`OTP ${otp} sent to ${email}`);
+  sendSMS: async (employeeId, otp) => {
+    // Placeholder for SMS sending functionality
+    // In a real application, you would use a service like Twilio, etc.
+    console.log(`OTP ${otp} sent to employee ${employeeId}`);
     return true;
   }
 };
 
 async function register(req, res) {
-  const { username, firstname, lastname, email, password } = req.body;
+  const { username, firstname, lastname, employee_id, password } = req.body;
 
-  if (!username || !firstname || !lastname || !email || !password) {
+  if (!username || !firstname || !lastname || !employee_id || !password) {
     return res
       .status(StatusCodes.BAD_REQUEST)
       .json({ msg: "Please provide all information" });
+  }
+
+  // Validate employee_id is exactly 4 digits
+  const employeeIdRegex = /^\d{4}$/;
+  if (!employeeIdRegex.test(employee_id)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Employee ID must be a 4-digit number" });
   }
 
   try {
@@ -32,8 +40,8 @@ async function register(req, res) {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     
     const existingUser = await db.client.query(
-      "SELECT username, userid FROM users WHERE username = $1 OR email = $2",
-      [username, email]
+      "SELECT username, userid FROM users WHERE username = $1 OR employee_id = $2",
+      [username, employee_id]
     );
     
     if (existingUser.rows.length > 0) {
@@ -44,8 +52,8 @@ async function register(req, res) {
     
     // Insert the user data into the database
     await db.client.query(
-      "INSERT INTO users (username, firstname, lastname, email, password) VALUES ($1, $2, $3, $4, $5)",
-      [username, firstname, lastname, email, hashedPassword]
+      "INSERT INTO users (username, firstname, lastname, employee_id, password) VALUES ($1, $2, $3, $4, $5)",
+      [username, firstname, lastname, employee_id, hashedPassword]
     );
 
     return res
@@ -60,18 +68,26 @@ async function register(req, res) {
 }
 
 async function login(req, res) {
-  const { email, password } = req.body;
+  const { employee_id, password } = req.body;
   
-  if (!email || !password) {
+  if (!employee_id || !password) {
     return res
       .status(StatusCodes.BAD_REQUEST)
       .json({ msg: "Please provide all information" });
   }
   
+  // Validate employee_id is exactly 4 digits
+  const employeeIdRegex = /^\d{4}$/;
+  if (!employeeIdRegex.test(employee_id)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Employee ID must be a 4-digit number" });
+  }
+  
   try {
     const user = await db.client.query(
-      "SELECT username, email, userid, password FROM users WHERE email = $1",
-      [email]
+      "SELECT username, employee_id, userid, password FROM users WHERE employee_id = $1",
+      [employee_id]
     );
     
     if (user.rows.length === 0) {
@@ -100,7 +116,7 @@ async function login(req, res) {
       msg: "Login successful",
       token,
       username: user.rows[0].username,
-      email: user.rows[0].email,
+      employee_id: user.rows[0].employee_id,
       userId: user.rows[0].userid,
     });
   } catch (error) {
@@ -120,12 +136,20 @@ async function checkUser(req, res) {
 }
 
 const resetPassword = async (req, res) => {
-  const { email, otp, password } = req.body;
+  const { employee_id, otp, password } = req.body;
 
-  if (!email || !otp || !password) {
+  if (!employee_id || !otp || !password) {
     return res
       .status(StatusCodes.BAD_REQUEST)
       .json({ msg: "Please provide all required information" });
+  }
+
+  // Validate employee_id is exactly 4 digits
+  const employeeIdRegex = /^\d{4}$/;
+  if (!employeeIdRegex.test(employee_id)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Employee ID must be a 4-digit number" });
   }
 
   // Validate OTP format: Ensure it's a 6-digit number
@@ -138,8 +162,8 @@ const resetPassword = async (req, res) => {
   
   try {
     const user = await db.client.query(
-      "SELECT * FROM users WHERE email = $1 AND otp = $2 AND otp_expires > $3",
-      [email, otp, new Date()]
+      "SELECT * FROM users WHERE employee_id = $1 AND otp = $2 AND otp_expires > $3",
+      [employee_id, otp, new Date()]
     );
 
     if (user.rows.length === 0) {
@@ -152,10 +176,10 @@ const resetPassword = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    //  update the user's password and clear the OTP and it's expiration
+    // update the user's password and clear the OTP and its expiration
     await db.client.query(
-      "UPDATE users SET password = $1, otp = NULL, otp_expires = NULL WHERE email = $2",
-      [hashedPassword, email]
+      "UPDATE users SET password = $1, otp = NULL, otp_expires = NULL WHERE employee_id = $2",
+      [hashedPassword, employee_id]
     );
 
     return res.status(StatusCodes.OK).json({
@@ -170,18 +194,26 @@ const resetPassword = async (req, res) => {
 };
 
 const requestOTP = async (req, res) => {
-  const { email } = req.body;
+  const { employee_id } = req.body;
 
-  if (!email) {
+  if (!employee_id) {
     return res
       .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Please provide email address" });
+      .json({ msg: "Please provide employee ID" });
+  }
+
+  // Validate employee_id is exactly 4 digits
+  const employeeIdRegex = /^\d{4}$/;
+  if (!employeeIdRegex.test(employee_id)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Employee ID must be a 4-digit number" });
   }
 
   try {
     const user = await db.client.query(
-      "SELECT * FROM users WHERE email = $1",
-      [email]
+      "SELECT * FROM users WHERE employee_id = $1",
+      [employee_id]
     );
 
     if (user.rows.length === 0) {
@@ -196,13 +228,13 @@ const requestOTP = async (req, res) => {
 
     // store the otp and expiration on database
     await db.client.query(
-      "UPDATE users SET otp = $1, otp_expires = $2 WHERE email = $3",
-      [otp, expireAt, email]
+      "UPDATE users SET otp = $1, otp_expires = $2 WHERE employee_id = $3",
+      [otp, expireAt, employee_id]
     );
 
-    // send the otp using via email using userUtility
-    await userUtility.sendEmail(email, otp);
-    res.status(StatusCodes.OK).json({ msg: "OTP sent to your email address" });
+    // send the OTP via SMS using userUtility
+    await userUtility.sendSMS(employee_id, otp);
+    res.status(StatusCodes.OK).json({ msg: "OTP sent to your registered phone number" });
   } catch (error) {
     console.error(error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
