@@ -27,8 +27,9 @@ async function register(req, res) {
       .json({ msg: "Please provide all information" });
   }
 
-  // Validate employee_id is 4 digits
-  if (!/^\d{4}$/.test(employee_id)) {
+  // Validate employee_id is exactly 4 digits
+  const employeeIdRegex = /^\d{4}$/;
+  if (!employeeIdRegex.test(employee_id)) {
     return res
       .status(StatusCodes.BAD_REQUEST)
       .json({ msg: "Employee ID must be a 4-digit number" });
@@ -73,6 +74,14 @@ async function login(req, res) {
     return res
       .status(StatusCodes.BAD_REQUEST)
       .json({ msg: "Please provide all information" });
+  }
+  
+  // Validate employee_id is exactly 4 digits
+  const employeeIdRegex = /^\d{4}$/;
+  if (!employeeIdRegex.test(employee_id)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Employee ID must be a 4-digit number" });
   }
   
   try {
@@ -135,6 +144,14 @@ const resetPassword = async (req, res) => {
       .json({ msg: "Please provide all required information" });
   }
 
+  // Validate employee_id is exactly 4 digits
+  const employeeIdRegex = /^\d{4}$/;
+  if (!employeeIdRegex.test(employee_id)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Employee ID must be a 4-digit number" });
+  }
+
   // Validate OTP format: Ensure it's a 6-digit number
   const otpRegex = /^\d{6}$/;
   if (!otpRegex.test(otp)) {
@@ -183,6 +200,14 @@ const requestOTP = async (req, res) => {
     return res
       .status(StatusCodes.BAD_REQUEST)
       .json({ msg: "Please provide employee ID" });
+  }
+
+  // Validate employee_id is exactly 4 digits
+  const employeeIdRegex = /^\d{4}$/;
+  if (!employeeIdRegex.test(employee_id)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Employee ID must be a 4-digit number" });
   }
 
   try {
