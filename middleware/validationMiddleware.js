@@ -1,7 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
 
-// Email validation regex
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Employee ID validation regex - must be exactly 4 digits
+const employeeIdRegex = /^\d{4}$/;
 
 // Password validation - at least 6 characters
 const passwordRegex = /^.{6,}$/;
@@ -10,26 +10,26 @@ const passwordRegex = /^.{6,}$/;
 const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
 
 const validateRegistration = (req, res, next) => {
-  const { username, firstname, lastname, email, password } = req.body;
+  const { username, firstname, lastname, employee_id, password } = req.body;
 
   // Check if all required fields are present
-  if (!username || !firstname || !lastname || !email || !password) {
+  if (!username || !firstname || !lastname || !employee_id || !password) {
     return res.status(StatusCodes.BAD_REQUEST).json({
       msg: "All fields are required",
       missing: {
         username: !username,
         firstname: !firstname,
         lastname: !lastname,
-        email: !email,
+        employee_id: !employee_id,
         password: !password
       }
     });
   }
 
-  // Validate email format
-  if (!emailRegex.test(email)) {
+  // Validate employee_id format (must be exactly 4 digits)
+  if (!employeeIdRegex.test(employee_id)) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Invalid email format"
+      msg: "Employee ID must be a 4-digit number"
     });
   }
 
@@ -64,17 +64,18 @@ const validateRegistration = (req, res, next) => {
 };
 
 const validateLogin = (req, res, next) => {
-  const { email, password } = req.body;
+  const { employee_id, password } = req.body;
 
-  if (!email || !password) {
+  if (!employee_id || !password) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Email and password are required"
+      msg: "Employee ID and password are required"
     });
   }
 
-  if (!emailRegex.test(email)) {
+  // Validate employee_id format (must be exactly 4 digits)
+  if (!employeeIdRegex.test(employee_id)) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Invalid email format"
+      msg: "Employee ID must be a 4-digit number"
     });
   }
 
@@ -82,17 +83,18 @@ const validateLogin = (req, res, next) => {
 };
 
 const validatePasswordReset = (req, res, next) => {
-  const { email, otp, password } = req.body;
+  const { employee_id, otp, password } = req.body;
 
-  if (!email || !otp || !password) {
+  if (!employee_id || !otp || !password) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Email, OTP, and new password are required"
+      msg: "Employee ID, OTP, and new password are required"
     });
   }
 
-  if (!emailRegex.test(email)) {
+  // Validate employee_id format (must be exactly 4 digits)
+  if (!employeeIdRegex.test(employee_id)) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Invalid email format"
+      msg: "Employee ID must be a 4-digit number"
     });
   }
 
@@ -114,17 +116,18 @@ const validatePasswordReset = (req, res, next) => {
 };
 
 const validateForgotPassword = (req, res, next) => {
-  const { email } = req.body;
+  const { employee_id } = req.body;
 
-  if (!email) {
+  if (!employee_id) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Email is required"
+      msg: "Employee ID is required"
     });
   }
 
-  if (!emailRegex.test(email)) {
+  // Validate employee_id format (must be exactly 4 digits)
+  if (!employeeIdRegex.test(employee_id)) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Invalid email format"
+      msg: "Employee ID must be a 4-digit number"
     });
   }
 
@@ -136,4 +139,4 @@ module.exports = {
   validateLogin,
   validatePasswordReset,
   validateForgotPassword
-}; 
+};
